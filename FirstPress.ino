@@ -12,6 +12,7 @@
 #define CAMERA  2
 #define LED     D4
 #define DEBUG   1
+#define OVERRIDE D7
 
 
 const int   wait = 500;
@@ -22,42 +23,45 @@ unsigned long time, runtime = 0;
 
 
 
+
 void setup() {
   pinMode(BUTTON, INPUT_PULLUP);   
+  pinMode(OVERRIDE, INPUT_PULLUP);
   pinMode(FLAME1, OUTPUT);
   pinMode(FLAME2, OUTPUT);
   pinMode(CAMERA, OUTPUT);
   pinMode(LED, OUTPUT);
   if (DEBUG) { Serial.begin(9600); }
+  debugMsg("Photobomb Operational!");
 }
 
 void loop() {
-  // Check for button press
   // If the button is pressed
   // and the accumulator is full enough
-  if(runtime < accumulator && digitalRead(BUTTON) == LOW){
+  if(runtime < accumulator && digitalRead(BUTTON) == LOW  && digitalRead(OVERRIDE) == HIGH ){
     debugMsg("Button press!");
-    // Puff for attention
-    puffUp(3,LOW);                    // three puffs
-    delay(1500);                      // pause for dramatic effect
-    // turn on the flame
-    digitalWrite(FLAME1, HIGH);       // FIRE!
-    time = millis(); // start timer
-    if(DEBUG){digitalWrite(LED, HIGH);} // indicate on board
-    delay(wait);
-    digitalWrite(CAMERA, HIGH);       // snap a photo
-    delay(5);     
-    digitalWrite(CAMERA, LOW);        // turn off camera snapper
-    // turn off flame
-    digitalWrite(FLAME1, LOW);        // turn off flame
-    runtime += millis() - time;       // calculate accumulator depletion
-    if(DEBUG){digitalWrite(LED, LOW);} // indicate on board
-    debugMsg("Run time: " + String(runtime)); // read out poofer on time
+    debugMsg(String(digitalRead(OVERRIDE)));
+    takePhoto();
+  }else if(digitalRead(BUTTON) == LOW && digitalRead(OVERRIDE) == LOW){
+    digitalWrite(FLAME1, HIGH);
+    digitalWrite(LED, HIGH);
+    debugMsg("Overide poofing!");
   }else{
-    runtime--;
+    if(runtime > 0){ // refill timer
+      runtime--;
+    }
+    if(runtime > accumulator) { // if the accumulator must fill, flash LED
+      for(int i = 0;i <= 10 ;i++){
+        digitalWrite(LED, HIGH);
+        delay(100);
+        digitalWrite(LED, LOW);
+        delay(100);
+      }
+    }
     // Otherwise, make sure the fire is off
     if(digitalRead(FLAME1) == HIGH){
       digitalWrite(FLAME1, LOW);
+      digitalWrite(LED, LOW);
     }
   }
 }
@@ -87,8 +91,23 @@ void debugPiece(String message){
   if (DEBUG) { Serial.print(message); }
 }
 
-void activatePoofer() {
-  
+void takePhoto() {
+  // Puff for attention
+    puffUp(3,LOW);                    // three puffs
+    delay(1500);                      // pause for dramatic effect
+    // turn on the flame
+    digitalWrite(FLAME1, HIGH);       // FIRE!
+    time = millis(); // start timer
+    if(DEBUG){digitalWrite(LED, HIGH);} // indicate on board
+    delay(wait);
+    digitalWrite(CAMERA, HIGH);       // snap a photo
+    delay(5);     
+    digitalWrite(CAMERA, LOW);        // turn off camera snapper
+    // turn off flame
+    digitalWrite(FLAME1, LOW);        // turn off flame
+    runtime += millis() - time;       // calculate accumulator depletion
+    if(DEBUG){digitalWrite(LED, LOW);} // indicate on board
+    debugMsg("Run time: " + String(runtime)); // read out poofer on time
 }
 
 

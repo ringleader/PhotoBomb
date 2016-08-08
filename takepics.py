@@ -8,6 +8,7 @@ import random
 from time import sleep
 import ftplib
 
+
 # takes 4 pictures and converts them to png files
 # then combines all 4 pictures, saves it in the images folder
 # and prints out the image to the dye sub printer
@@ -60,36 +61,71 @@ print "Waiting for a quartet of photos!"
 list = dircache.listdir('.')
 count = 0
 imageCount = 0
+date = 0
 newList = []
-while count < len(list):
-   
-   # find the oldest 4 JPG images and move them into the folder tempPictures 
-   # as well as the images folder
-   
-   if list[count].find("JPG") != -1 and imageCount < 4:
-      #print list[count]
-      newList.append(list[count])
-      imageCount = imageCount + 1
-      shutil.copyfile(list[count],"tempPictures/image%s.JPG" % ( imageCount))  
-      
-   count = count + 1
+today = datetime.date.today()
+datetoday = today.strftime('%m-%d-%Y')
+tempfilepath = datetoday + "/tempPictures"
+processedfilepath = datetoday + "/images"
 
-#print list
-take = []
-if imageCount == 4:
-	#startImage = random.randint(1,4)
-	startImage = 1
-	print "Got photos! Compiling into finished image..."
+# if the folder exists, make the folder
+if os.path.exists(datetoday):
+	if not os.path.exists(tempfilepath):
+		os.makedirs(tempfilepath)
+	if not os.path.exists(processedfilepath):
+		os.makedirs(processedfilepath)
+
+	while count < len(list):
+	   
+	   # find the oldest 4 JPG images and move them into the folder tempPictures 
+	   # as well as the images folder
+	   
+	   if list[count].find("JPG") != -1 and imageCount < 4:
+		  filepath = "%s/tempPictures/image%s.JPG" % (datetoday, imageCount)
+		  #print list[count]
+		  newList.append(list[count])
+		  imageCount = imageCount + 1
+		  shutil.copyfile(list[count],filepath)  
+		  
+	   count = count + 1
+
+	#print list
+	take = []
+	if imageCount == 4:
+		
+		
+		startImage = 1
+		print "Got photos! Compiling into finished image..."
+		printImage = takeStandard()
+
+		
+
+		# print out the picture - this works
+		# uses Windows 7 image viewer to print default size of the paper
+
+		# call('rundll32.exe C:\\WINDOWS\\system32\\shimgvw.dll,ImageView_PrintTo C:\\PhotoBooth\\tempPictures\\newImage.png "MITSUBISHI CP70D Series(USB)"')
+
+
+		# save the image also in the archive folder
+		now = datetime.datetime.now()
+		archiveName = "photo_%i-%02i-%02i-%02i-%02i-%02i.png" % (now.year,now.month, now.day, now.hour, now.minute,now.second)
+		
+		print "Printing %s " % archiveName
+		printImage.save(datetoday + "/;images/" + archiveName)
 	
+else:
+	sleep(10)
+	
+def takeStandard ():
 	for i in range(1,5):
 		shutil.move(newList[i-1],"images/%s" % (newList[i-1]) )
 	#	print startImage
-		take.append(Image.open("tempPictures/image%s.JPG" %(startImage)))
+		take.append(Image.open(datetoday + "/tempPictures/image%s.JPG" %(startImage)))
 		startImage = startImage + 1
 		if startImage > 4:
 			startImage = 1
 	
-	featureImage = Image.open("tempPictures/featurd-image.svg")
+	featureImage = Image.open(datetoday + "/tempPictures/featurd-image.svg")
 
 	imageWidthBig = 1830	
 	imageHeightBig = int(imageWidthBig * .75)
@@ -111,21 +147,7 @@ if imageCount == 4:
 	blank_image.paste(take[1], (imageSpacing,BottomRowTop))
 	blank_image.paste(take[2], (imageSpacing * 2 + imageWidth ,BottomRowTop))
 	blank_image.paste(take[3], (imageSpacing * 3 + imageWidth * 2,BottomRowTop))
-
-	blank_image.save("tempPictures/newImage.png")
-
-	# print out the picture - this works
-	# uses Windows 7 image viewer to print default size of the paper
-
-	# call('rundll32.exe C:\\WINDOWS\\system32\\shimgvw.dll,ImageView_PrintTo C:\\PhotoBooth\\tempPictures\\newImage.png "MITSUBISHI CP70D Series(USB)"')
-
-
-	# save the image also in the archive folder
-	now = datetime.datetime.now()
-	archiveName = "photo_%i-%02i-%02i-%02i-%02i-%02i.png" % (now.year,now.month, now.day, now.hour, now.minute,now.second)
 	
-	print "Printing %s " % archiveName
-	blank_image.save("images/" + archiveName)
+	blank_image.save(datetoday + "/tempPictures/newImage.png")
 	
-else:
-	sleep(10)
+	return blank_image

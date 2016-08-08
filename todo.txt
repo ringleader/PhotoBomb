@@ -1,0 +1,20 @@
+TO DO
+
+HARDWARE
+Build pilot light
+Get camera
+Make camera fire on signal
+Build camera box
+Figure printer solution
+Build backdrop
+
+
+SOFTWARE
+Wirelessly connect poofer board to button board
+Upload image to server
+Tag image with tinyURL to image
+Set timeout on poofer activation
+indicate when the accumulator must fill
+
+BRANDING
+Create image templates
