@@ -1,0 +1,32 @@
+# This section opens an FTP connection and uploads the photo
+file = "image1.JPG"
+""""
+from fabric.api import env
+from fabric.operations import run, put
+
+env.hosts = ['home296064887.1and1-data.host']
+# env.user = 'u54648292-photobomb'
+# env.password = 'FirePictures47!'
+env.user = 'u54648292'
+env.password = 'L_square8'
+def copy():
+    # make sure the directory is there!
+    run('mkdir -p farm/photoBomb')
+
+    # our local 'testdirectory' - it may contain files or subdirectories ...
+    put(file, '/photoBomb')
+copy()
+
+# more different not working code
+import pysftp
+
+def upload_file(file_path):
+
+    private_key = "L_square8"  # can use password keyword in Connection instead
+    srv = pysftp.Connection(host="whatsgoodthere.com", username="u54648292", private_key=private_key)
+    srv.chdir('/farm/photoBomb')  # change directory on remote server
+    srv.put(file_path)  # To download a file, replace put with get
+    srv.close()  # Close connection
+	
+upload_file(file)	
+"""	

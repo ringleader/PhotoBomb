@@ -10,6 +10,7 @@ import ftplib
 
 def takeStandard() :
 	startImage = 1
+	take = []
 	for i in range(1,5):
 		shutil.move(datetoday + "/" + newList[i-1],datetoday + "/images/%s" % (newList[i-1]) )
 	#	print startImage
@@ -62,39 +63,6 @@ print "My short url is {}".format(shortener.short(url))
 
 """
 
-# This section opens an FTP connection and uploads the photo
-file = "image1.JPG"
-""""
-from fabric.api import env
-from fabric.operations import run, put
-
-env.hosts = ['home296064887.1and1-data.host']
-# env.user = 'u54648292-photobomb'
-# env.password = 'FirePictures47!'
-env.user = 'u54648292'
-env.password = 'L_square8'
-def copy():
-    # make sure the directory is there!
-    run('mkdir -p farm/photoBomb')
-
-    # our local 'testdirectory' - it may contain files or subdirectories ...
-    put(file, '/photoBomb')
-copy()
-
-# more different not working code
-import pysftp
-
-def upload_file(file_path):
-
-    private_key = "L_square8"  # can use password keyword in Connection instead
-    srv = pysftp.Connection(host="whatsgoodthere.com", username="u54648292", private_key=private_key)
-    srv.chdir('/farm/photoBomb')  # change directory on remote server
-    srv.put(file_path)  # To download a file, replace put with get
-    srv.close()  # Close connection
-	
-upload_file(file)	
-"""	
-
 print "Waiting for a quartet of photos!"
 count = 0
 imageCount = 0
@@ -102,19 +70,18 @@ date = 0
 newList = []
 today = datetime.date.today()
 datetoday = '{dt.month}-{dt.day}-{dt.year}'.format(dt = datetime.datetime.now())
-list = dircache.listdir('./'+datetoday)
-'2013/4/19'
 tempfilepath = datetoday + "/tempPictures"
 processedfilepath = datetoday + "/images"
 # if the folder exists, make the folder
 if os.path.exists(datetoday):
-
+	
 	if not os.path.exists(tempfilepath):
 		os.makedirs(tempfilepath)
 		print "Make temp folder"
 	if not os.path.exists(processedfilepath):
 		os.makedirs(processedfilepath)
 		print "Make processed folder"
+	list = dircache.listdir('./'+datetoday)
 	while count < len(list):
 	   
 	   # find the oldest 4 JPG images and move them into the folder tempPictures 
@@ -129,11 +96,8 @@ if os.path.exists(datetoday):
 	   count = count + 1
 
 	#print list
-	take = []
+	
 	if imageCount == 4:
-		
-		
-		
 		print "Got photos! Compiling into finished image..."
 		printImage = takeStandard()
 
