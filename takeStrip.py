@@ -1,5 +1,5 @@
 from Tkinter import *
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageFont, ImageDraw
 from subprocess import call
 import os, shutil
 import datetime
@@ -8,42 +8,58 @@ import random
 from time import sleep
 import ftplib
 
+bottomText = "Flaming Photobooth"
+printPhotos = True
+
 def takeStrip() : 
 	startImage = 1
 	take = []
-	for i in range(1,4):
+	for i in range(1,5):
 		shutil.move(datetoday + "/" + newList[i-1],datetoday + "/images/%s" % (newList[i-1]) )
 		take.append(Image.open(datetoday + "/tempPictures/image%s.JPG" %(startImage)))
 		startImage = startImage + 1
-		if startImage > 3:
+		if startImage > 4:
 			startImage = 1
 	
 	# featureImage = Image.open(datetoday + "/tempPictures/feature-image.jpg")
-
-	imageWidth = 1064
-	imageHeight = 1419
-	imageSpacing = 50
+	randomBG = int(random.randint(1,3)-1)
+	backgrounds = ["blueStripeBg.jpg","multiBg.jpg","stripedBg.jpg"]
+	
+	font = ImageFont.truetype("Firefly.otf", 45)
+	imageWidth = 545
+	imageHeight = int(imageWidth * .75)
+	imageSpacing = 20
+	imageSpacingHorizontal = 35
 	secondRow = imageHeight +  (imageSpacing * 2)
 	thirdRow = (imageHeight * 2) +  (imageSpacing * 3)
-	
-	take[0]=take[0].crop((800, 0, 3200, 3000))
-	take[1]=take[1].crop((800, 0, 3200, 3000))
-	take[2]=take[2].crop((800, 0, 3200, 3000))
-	
+	fourthRow = (imageHeight * 3) +  (imageSpacing * 4)
+	logo = (imageHeight * 4) +  (imageSpacing * 3)
+		
 	take[0]=take[0].resize((imageWidth,imageHeight), Image.NEAREST)
 	take[1]=take[1].resize((imageWidth,imageHeight), Image.NEAREST)
 	take[2]=take[2].resize((imageWidth,imageHeight), Image.NEAREST)
-
-	blank_image = Image.new("RGB", (2304, 3456), "white")
-	blank_image.paste(take[0], (imageSpacing,imageSpacing))
-	blank_image.paste(take[0], (imageSpacing * 2 + imageWidth,imageSpacing))
-	blank_image.paste(take[1], (imageSpacing,secondRow))
-	blank_image.paste(take[1], (imageSpacing * 2 + imageWidth,secondRow))
-	blank_image.paste(take[2], (imageSpacing,thirdRow))
-	blank_image.paste(take[2], (imageSpacing * 2 + imageWidth,thirdRow))
+	take[3]=take[3].resize((imageWidth,imageHeight), Image.NEAREST)
 	
+	#blank_image = Image.open(backgrounds[randomBG]) # Orange and blue stripes
+	blank_image = Image.open("damask.jpg")
+	
+	blank_image.paste(take[0], (imageSpacingHorizontal,imageSpacing))
+	blank_image.paste(take[0], (imageSpacingHorizontal * 2 + imageWidth,imageSpacing))
+	blank_image.paste(take[1], (imageSpacingHorizontal,secondRow))
+	blank_image.paste(take[1], (imageSpacingHorizontal * 2 + imageWidth,secondRow))
+	blank_image.paste(take[2], (imageSpacingHorizontal,thirdRow))
+	blank_image.paste(take[2], (imageSpacingHorizontal * 2 + imageWidth,thirdRow))
+	blank_image.paste(take[3], (imageSpacingHorizontal,fourthRow))
+	blank_image.paste(take[3], (imageSpacingHorizontal * 2 + imageWidth,fourthRow))
+	blank_image.paste(take[3], (imageSpacingHorizontal,fourthRow))
+	blank_image.paste(take[3], (imageSpacingHorizontal * 2 + imageWidth,fourthRow))
+	logoText = ImageDraw.Draw(blank_image)
+	#logoText.text((120, 1700), bottomText, font=font, fill="white")
+	#logoText.text((int(imageWidth + (imageSpacingHorizontal * 2) + 85), 1700), bottomText, font=font, fill="white")
+	logoText.text((160, 1700), datetoday, font=font, fill="white")
+	logoText.text((int(imageWidth + (imageSpacingHorizontal * 2) + 135), 1700), datetoday, font=font, fill="white")
+	logoText = ImageDraw.Draw(blank_image)
 	blank_image.save(datetoday + "/tempPictures/newImage.png")
-	print "Image saved to "+ datetoday + "/tempPictures/newImage.png"
 	
 	return blank_image
 
@@ -64,7 +80,7 @@ print "My short url is {}".format(shortener.short(url))
 
 """
 
-print "Waiting for a trio of photos!"
+print "Waiting for a quartet of photos!"
 count = 0
 imageCount = 0
 date = 0
@@ -88,7 +104,7 @@ if os.path.exists(datetoday):
 	   # find the oldest 4 JPG images and move them into the folder tempPictures 
 	   # as well as the images folder
 	   
-	   if list[count].find("JPG") != -1 and imageCount < 3:
+	   if list[count].find("JPG") != -1 and imageCount < 4:
 		  filepath = datetoday + "/tempPictures/image%s.JPG" % (imageCount)
 		  newList.append(list[count])
 		  imageCount = imageCount + 1
@@ -98,14 +114,16 @@ if os.path.exists(datetoday):
 
 	#print list
 	
-	if imageCount == 3:
+	if imageCount == 4:
 		print "Got photos! Compiling into finished image..."
 		printImage = takeStrip()
 
 		# print out the picture - this works
 		# uses Windows 7 image viewer to print default size of the paper
-
-		# call('rundll32.exe C:\\WINDOWS\\system32\\shimgvw.dll,ImageView_PrintTo C:\\PhotoBooth\\tempPictures\\newImage.png "MITSUBISHI CP70D Series(USB)"')
+		command = ('rundll32.exe C:\WINDOWS\system32\shimgvw.dll,ImageView_PrintTo C:\Users\James\Pictures\Eye-Fi\%s' % (datetoday) )+ r'\tempPictures\newImage.png "Canon SELPHY CP1200 WS"'
+		print command
+		if printPhotos == True:
+			call(command)
 
 
 		# save the image also in the archive folder
