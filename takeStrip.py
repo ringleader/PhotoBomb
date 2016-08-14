@@ -7,9 +7,16 @@ import dircache
 import random
 from time import sleep
 import ftplib
+import facebook
+from image2gif import writeGif
 
 bottomText = "Flaming Photobooth"
-printPhotos = True
+printPhotos = False
+postFBPhotos = False
+makeGif = True
+fbMessage = 'The Flaming Photobooth just got access to facebook!'
+fbpageID = "pageIdHere"
+fbaccesstoken = "accessTokenHere"
 
 def takeStrip() : 
 	startImage = 1
@@ -61,8 +68,21 @@ def takeStrip() :
 	logoText = ImageDraw.Draw(blank_image)
 	blank_image.save(datetoday + "/tempPictures/newImage.png")
 	
+	if makeGif == True:
+		archiveGifName = datetoday + "/images/photo_%i-%02i-%02i-%02i-%02i-%02i.gif" % (now.year,now.month, now.day, now.hour, now.minute,now.second)
+		gifStrip = writeGif(archiveGifName, take, duration=.75, dither=0)
+	
 	return blank_image
-
+	
+def get_api(cfg):
+	graph = facebook.GraphAPI(cfg['access_token'])
+	resp = graph.get_object('me/accounts')
+	page_access_token = None
+	for page in resp['data']:
+		if page['id'] == cfg['page_id']:
+			page_access_token = page['access_token']
+		graph = facebook.GraphAPI(page_access_token)
+	return graph
 
 
 # takes 4 pictures and converts them to png files
@@ -86,9 +106,15 @@ imageCount = 0
 date = 0
 newList = []
 today = datetime.date.today()
+now = datetime.datetime.now()
 datetoday = '{dt.month}-{dt.day}-{dt.year}'.format(dt = datetime.datetime.now())
 tempfilepath = datetoday + "/tempPictures"
 processedfilepath = datetoday + "/images"
+# facebook
+
+
+
+
 # if the folder exists, make the folder
 if os.path.exists(datetoday):
 	
@@ -132,6 +158,19 @@ if os.path.exists(datetoday):
 		
 		print "Printing %s " % archiveName
 		printImage.save(datetoday + "/images/" + archiveName)
+		
+		"""
+		# get longer lived token
+		if postFBPhotos == True:
+			api.put_photo(image=open(photoPath,'rb').read(), message=fbMessage)
+			cfg = {
+				"page_id"      : fbpageID,
+				"access_token" : fbaccesstoken
+				}
+			photoPath = (datetoday) + r'\tempPictures\newImage.png'
+			api = get_api(cfg)
+			msg = "The Flaming Photobooth just got access to facebook!"
+		"""
 	
 else:
 	sleep(10)
