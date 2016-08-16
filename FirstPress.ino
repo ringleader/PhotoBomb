@@ -10,31 +10,35 @@
 #define FIREFLASH  NULL
 #define PIXELFLASH  3
 #define PIXELSHOW  3
-#define CAMERA  2
+#define CAMERASHUTTER  2
+#define CAMERAFOCUS 1
 #define LED     D4
 #define DEBUG   1
 #define OVERRIDE D7
+#define FIREPOT 0
 
 
-const int   wait = 500;
+
 bool        debug = true;
-const int   accumulator = 10000;
-unsigned long time, runtime = 0;
-
-int         leds = 12; 
+const int   accumulator = 10000; // total accumulator
+unsigned long time, runtime = 0; // Accumulator timing
+int         leds = 12;
 
 
 // comment out if not using neopixels
 #include <Adafruit_NeoPixel.h>
 #ifdef __AVR__
   #include <avr/power.h>
-#endif 
+#endif
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(leds, FIREFLASH, NEO_GRB + NEO_KHZ800);
 
 
 void setup() {
-  pinMode(BUTTON, INPUT_PULLUP);   
+  pinMode(BUTTON, INPUT_PULLUP);
   pinMode(OVERRIDE, INPUT_PULLUP);
+  pinMode(FIREPOT, INPUT);
+  pinMode(CAMERASHUTTER, OUTPUT);
+  pinMode(CAMERAFOCUS, OUTPUT);
   pinMode(FIREFLASH, OUTPUT);
   pinMode(PIXELFLASH, OUTPUT);
   pinMode(CAMERA, OUTPUT);
@@ -42,24 +46,31 @@ void setup() {
   if(PIXELSHOW && PIXELSHOW != PIXELFLASH){
     pinMode(PIXELFLASH, OUTPUT);
   }
-  
+
   if (PIXELFLASH != NULL) {
     // This is for Trinket 5V 16MHz, you can remove these three lines if you are not using a Trinket
     #if defined (__AVR_ATtiny85__)
       if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
     #endif
 
-    
+
     strip.begin();
     strip.show(); // Initialize all pixels to 'off'
   }
 
-  
+
   if (DEBUG) { Serial.begin(9600); }
   debugMsg("Photobomb Operational!");
 }
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+           /* MAIN LOOP */
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
 
 void loop() {
+	const int   wait = 500;
+  //const int   wait = analogRead(FIREPOT);
   // If the button is pressed
   // and the accumulator is full enough
   if (FIREFLASH != NULL) {
@@ -70,8 +81,35 @@ void loop() {
     pixelShow();
   }
 }
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
+           /* END MAIN LOOP */
+//////////////////////////////////////////////////
+//////////////////////////////////////////////////
 
-/* FUNCTIONS */
+
+
+//////////////////////////////////////////////////
+           /* CAMERA FUNCTIONS */
+//////////////////////////////////////////////////
+
+void takePhoto() {
+	digitalWrite(CAMERASHUTTER, HIGH);       // snap a photo
+	delay(5);
+	digitalWrite(CAMERASHUTTER, LOW);        // turn off camera snapper
+}
+
+void focus() {
+	digitalWrite(CAMERAFOCUS, HIGH);       // focus the lens
+	delay(500);
+	digitalWrite(CAMERAFOCUS, LOW);        // release focus
+}
+
+
+//////////////////////////////////////////////////
+           /* FIRE FUNCTIONS */
+//////////////////////////////////////////////////
+
 void fireCamera(){
   if(runtime < accumulator && digitalRead(BUTTON) == LOW  && digitalRead(OVERRIDE) == HIGH ){
       debugMsg("Button press!");
@@ -122,11 +160,11 @@ void takeFirePhoto() {
   // turn on the flame
   digitalWrite(FIREFLASH, HIGH);       // FIRE!
   time = millis(); // start timer
+  focus();
   if(DEBUG){digitalWrite(LED, HIGH);} // indicate on board
-  delay(wait);
-  digitalWrite(CAMERA, HIGH);       // snap a photo
-  delay(5);     
-  digitalWrite(CAMERA, LOW);        // turn off camera snapper
+  delay((int)wait*.667);
+  takePhoto();
+  delay((int)wait*.333);
   // turn off flame
   digitalWrite(FIREFLASH, LOW);        // turn off flame
   runtime += millis() - time;       // calculate accumulator depletion
@@ -134,32 +172,40 @@ void takeFirePhoto() {
   debugMsg("Run time: " + String(runtime)); // read out poofer on time
 }
 
+//////////////////////////////////////////////////
+         /* Neopixel Camera Functions */
+//////////////////////////////////////////////////
+
+
 void pixelShow() {
   int randomShow = random(0,3);
   if(randomShow == 0) {
     theaterChaseRainbow(50);
   }else if(randomShow == 1) {
-    colorWipe(strip.Color(random(0,255), random(0,255), random(0,255)), random(10,50)); 
+    colorWipe(strip.Color(random(0,255), random(0,255), random(0,255)), random(10,50));
   }else if(randomShow == 2) {
      rainbow(random(10,50));
   }else if(randomShow == 3) {
     rainbowCycle(random(10,50));
   }
-  
 }
+
 void pixelCamera() {
   if(digitalRead(BUTTON) == LOW ){
-    colorWipe(strip.Color(255, 255, 255), 0); // Flash white
-    if(DEBUG){digitalWrite(LED, HIGH);} // indicate on board
-    delay(wait);
-    digitalWrite(CAMERA, HIGH);       // snap a photo
-    delay(5);     
-    digitalWrite(CAMERA, LOW);        // turn off camera snapper
+	colorWipe(strip.Color(255, 255, 255), 0); // Flash white
+	focus();
+	if(DEBUG){digitalWrite(LED, HIGH);} // indicate on board
+	delay((int)wait*.667);
+	takePhoto();
+	delay((int)wait*.333);
     colorWipe(strip.Color(255, 0, 0), 10); // Red
   }
 }
 
-/* Neopixel functuons */
+//////////////////////////////////////////////////
+         /* Neopixel Light Functions */
+//////////////////////////////////////////////////
+
 // Fill the dots one after the other with a color
 void colorWipe(uint32_t c, uint8_t wait) {
   for(uint16_t i=0; i<strip.numPixels(); i++) {
